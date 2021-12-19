@@ -23,6 +23,8 @@ trait MyList[+A] {
 
   def indexOf[B >: A](element: B): Long
 
+  def indexOfPredicate[B >: A](predicate: A => Boolean): Long
+
   def map[B](f: A => B): MyList[B]
 
   def filter(predicate: A => Boolean): MyList[A]
@@ -54,6 +56,8 @@ trait MyList[+A] {
   def foldLeft[B](z: B)(operator: (B, A) => B): B
 
   def foldRight[B](z: B)(operator: (A, B) => B): B
+
+  def replace[B >: A](index: Long, element: B): MyList[B]
 }
 
 case object Nil extends MyList[Nothing] {
@@ -74,7 +78,9 @@ case object Nil extends MyList[Nothing] {
 
   override def size: Long = 0
 
-  override def indexOf[B >: Nothing](element: B): Long = throw new NoSuchElementException
+  override def indexOf[B >: Nothing](element: B): Long = -1
+
+  override def indexOfPredicate[B >: Nothing](predicate: Nothing => Boolean): Long = -1
 
   override def map[B](f: Nothing => B): MyList[B] = Nil
 
@@ -107,6 +113,8 @@ case object Nil extends MyList[Nothing] {
   override def foldLeft[B](z: B)(operator: (B, Nothing) => B): B = throw new NoSuchElementException
 
   override def foldRight[B](z: B)(operator: (Nothing, B) => B): B = throw new NoSuchElementException
+
+  override def replace[A](index: Long, element: A): MyList[A] = throw new NoSuchElementException
 }
 
 final case class ::[+A](head: A, tail: MyList[A]) extends MyList[A] {
@@ -167,11 +175,14 @@ final case class ::[+A](head: A, tail: MyList[A]) extends MyList[A] {
   override def find(predicate: A => Boolean): Option[A] = {
 
     @tailrec
-    def recFind(list: MyList[A]): Option[A] =
-      if (!list.tail.isEmpty) {
-        if (predicate(list.head)) Option(list.head)
-        else recFind(list.tail)
-      } else Option.empty
+    def recFind(list: MyList[A]): Option[A] = {
+      list match {
+        case hd :: tl =>
+          if (predicate(hd)) Option(list.head)
+          else recFind(tl)
+        case Nil => Option.empty
+      }
+    }
 
     recFind(this)
   }
@@ -188,15 +199,30 @@ final case class ::[+A](head: A, tail: MyList[A]) extends MyList[A] {
     recExists(this)
   }
 
-  override def indexOf[B >: A](element: B): Long = {
+  override def indexOfPredicate[B >: A](predicate: A => Boolean): Long = {
 
     @tailrec
     def recIndexOf(list: MyList[A], accum: Long = 0): Long =
-      if (list.head == element) accum
-      else if (list.tail.head == element) accum + 1
+      if (predicate(list.head)) accum
+      else if (predicate(list.tail.head)) accum + 1
       else recIndexOf(list.tail, accum + 1)
 
     recIndexOf(this)
+  }
+
+  override def indexOf[B >: A](element: B): Long = {
+
+    @tailrec
+    def recIndexOf(list: MyList[A], accum: Long): Long = {
+      list match {
+        case hd :: tl =>
+          if (hd == element) accum
+          else recIndexOf(tl, accum + 1)
+        case Nil => -1
+      }
+    }
+
+    recIndexOf(this, 0)
   }
 
   override def isDefinedAt[B >: A](element: B): Boolean = {
@@ -322,6 +348,21 @@ final case class ::[+A](head: A, tail: MyList[A]) extends MyList[A] {
       }
 
     recFoldRight(this.reverse, z)
+  }
+
+  override def replace[B >: A](index: Long, element: B): MyList[B] = {
+
+    @tailrec
+    def recIndexOf(list: MyList[A], updatedList: MyList[B], acc: Long): MyList[B] = {
+      list match {
+        case hd :: tl =>
+          if (acc == index) recIndexOf(tl, element :: updatedList, acc + 1)
+          else recIndexOf(tl, hd :: updatedList, acc + 1)
+        case Nil => updatedList
+      }
+    }
+
+    recIndexOf(this, Nil, 0).reverse
   }
 }
 

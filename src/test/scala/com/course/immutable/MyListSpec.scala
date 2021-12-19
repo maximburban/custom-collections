@@ -95,6 +95,14 @@ class MyListSpec extends AnyFunSuite {
     assert(result == 3)
   }
 
+  test("should return index of predicate element") {
+    val list = 1 :: 4 :: 8 :: 22 :: Nil
+
+    val result = list.indexOfPredicate((element: Int) => element > 3)
+
+    assert(result == 1)
+  }
+
   test("should return true if element is defined") {
     val list = 1 :: 4 :: 8 :: 22 :: Nil
 
@@ -206,5 +214,14 @@ class MyListSpec extends AnyFunSuite {
     println(result)
 
     assert(result == 15)
+  }
+
+  test("should replace element with index") {
+    val list = "one" :: "two" :: "three" :: "four" :: Nil
+    val expectedList = "one" :: "two" :: "ten" :: "four" :: Nil
+
+    val result = list.replace(2, "ten")
+
+    assert(result == expectedList)
   }
 }
