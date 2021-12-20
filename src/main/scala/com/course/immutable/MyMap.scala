@@ -47,7 +47,7 @@ case class MyMap[K, V](buckets: Vector[MyList[(K, V)]]) {
 
   def remove(key: K): MyMap[K, V] = {
     val idx = indexFor(key)
-    val updatedMap = buckets(idx).filter(element => element._1 != key)
+    val updatedMap = buckets(idx).filter { case (savedKey, savedValue) => savedKey != key }
     MyMap(buckets.updated(idx, updatedMap))
   }
 
@@ -70,7 +70,7 @@ object MyMap {
     @tailrec
     def recPopulate(el: List[(K, V)], resultMap: MyMap[K, V]): MyMap[K, V] =
       el match {
-        case hd +: tl => recPopulate(tl, resultMap.+(hd._1, hd._2))
+        case (key, value) +: tl => recPopulate(tl, resultMap.+(key, value))
         case _ => resultMap
       }
 
