@@ -70,7 +70,7 @@ object MyMap {
     @tailrec
     def recPopulate(el: List[(K, V)], resultMap: MyMap[K, V]): MyMap[K, V] =
       el match {
-        case (key, value) +: tl => recPopulate(tl, resultMap.+(key, value))
+        case hd +: tl => recPopulate(tl, resultMap + hd)
         case _ => resultMap
       }
 
