@@ -100,7 +100,7 @@ class MyListSpec extends AnyFunSuite {
 
     val result = list.indexOfPredicate((element: Int) => element > 3)
 
-    assert(result == 1)
+    assert(result == Option(1))
   }
 
   test("should return true if element is defined") {

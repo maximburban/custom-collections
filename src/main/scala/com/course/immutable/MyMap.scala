@@ -6,15 +6,18 @@ case class MyMap[K, V](buckets: Vector[MyList[(K, V)]]) {
 
   private val initialCapacity = 15
 
-  def +(pair: (K, V)): MyMap[K, V] = {
-    val idx = indexFor(pair._1)
+  def +(pair: (K, V)): MyMap[K, V] = add(pair)
+
+  def add(pair: (K, V)): MyMap[K, V] = {
+    val (key, value) = pair
+    val idx = indexFor(key)
 
     if (buckets.isEmpty) init + pair
     else {
       val chain = buckets(idx)
-      chain.indexOfPredicate(element => element._1 == pair._1) match {
-        case -1 => MyMap(buckets.updated(idx, chain.cons(pair)))
-        case i => MyMap(buckets.updated(idx, chain.replace(i, pair)))
+      chain.indexOfPredicate { case (savedKey, savedValue) => savedKey == key } match {
+        case None => MyMap(buckets.updated(idx, chain.cons(pair)))
+        case Some(i) => MyMap(buckets.updated(idx, chain.replace(i, pair)))
       }
     }
   }
@@ -31,19 +34,18 @@ case class MyMap[K, V](buckets: Vector[MyList[(K, V)]]) {
     recSize(buckets, 0)
   }
 
-  def isEmpty: Boolean = {
-    if (this.size == 0) true
-    else false
-  }
+  def isEmpty: Boolean = this.size == 0
 
   def get(key: K): Option[V] = {
     val idx = indexFor(key)
     buckets(idx)
-      .find(element => element._1 == key)
-      .map(element => element._2)
+      .find { case (savedKey, savedValue) => savedKey == key }
+      .map { case (savedKey, savedValue) => savedValue }
   }
 
-  def -(key: K): MyMap[K, V] = {
+  def -(key: K): MyMap[K, V] = remove(key)
+
+  def remove(key: K): MyMap[K, V] = {
     val idx = indexFor(key)
     val updatedMap = buckets(idx).filter(element => element._1 != key)
     MyMap(buckets.updated(idx, updatedMap))

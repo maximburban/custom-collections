@@ -23,7 +23,7 @@ trait MyList[+A] {
 
   def indexOf[B >: A](element: B): Long
 
-  def indexOfPredicate[B >: A](predicate: A => Boolean): Long
+  def indexOfPredicate[B >: A](predicate: A => Boolean): Option[Long]
 
   def map[B](f: A => B): MyList[B]
 
@@ -80,7 +80,7 @@ case object Nil extends MyList[Nothing] {
 
   override def indexOf[B >: Nothing](element: B): Long = -1
 
-  override def indexOfPredicate[B >: Nothing](predicate: Nothing => Boolean): Long = -1
+  override def indexOfPredicate[B >: Nothing](predicate: Nothing => Boolean): Option[Long] = Option.empty
 
   override def map[B](f: Nothing => B): MyList[B] = Nil
 
@@ -199,13 +199,16 @@ final case class ::[+A](head: A, tail: MyList[A]) extends MyList[A] {
     recExists(this)
   }
 
-  override def indexOfPredicate[B >: A](predicate: A => Boolean): Long = {
+  override def indexOfPredicate[B >: A](predicate: A => Boolean): Option[Long] = {
 
     @tailrec
-    def recIndexOf(list: MyList[A], accum: Long = 0): Long =
-      if (predicate(list.head)) accum
-      else if (predicate(list.tail.head)) accum + 1
-      else recIndexOf(list.tail, accum + 1)
+    def recIndexOf(list: MyList[A], accum: Long = 0): Option[Long] =
+      list match {
+        case hd :: tl =>
+          if (predicate(hd)) Some(accum)
+          else recIndexOf(tl, accum + 1)
+        case Nil => None
+      }
 
     recIndexOf(this)
   }
